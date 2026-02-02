@@ -1,5 +1,11 @@
 # Google MCPs
 
+> **⚠️ DEPRECATED**: This repository has been moved to [workspace-tools](https://github.com/frydzewski/workspace-tools).
+>
+> The code now lives at `packages/mcps/` in the monorepo. Please use the new location for all future work.
+
+---
+
 MCP (Model Context Protocol) servers for Google APIs, designed for use with Claude Code.
 
 ## Available MCPs
