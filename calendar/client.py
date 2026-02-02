@@ -305,6 +305,153 @@ class CalendarClient:
 
         return slots
 
+    def create_event(
+        self,
+        summary: str,
+        start: datetime,
+        end: datetime,
+        calendar_id: str = "primary",
+        description: Optional[str] = None,
+        location: Optional[str] = None,
+        attendees: Optional[list[str]] = None,
+        send_notifications: bool = True,
+    ) -> Event:
+        """
+        Create a new calendar event.
+
+        Args:
+            summary: Event title
+            start: Start datetime (will be converted to RFC3339)
+            end: End datetime
+            calendar_id: Calendar to create event in
+            description: Optional event description
+            location: Optional location string
+            attendees: Optional list of email addresses to invite
+            send_notifications: Whether to send invite emails (default True)
+
+        Returns:
+            Created Event object with ID and htmlLink
+        """
+        event_body: dict = {
+            "summary": summary,
+            "start": {"dateTime": self._to_rfc3339(start)},
+            "end": {"dateTime": self._to_rfc3339(end)},
+        }
+
+        if description:
+            event_body["description"] = description
+        if location:
+            event_body["location"] = location
+        if attendees:
+            event_body["attendees"] = [{"email": email} for email in attendees]
+
+        try:
+            result = (
+                self.service.events()
+                .insert(
+                    calendarId=calendar_id,
+                    body=event_body,
+                    sendNotifications=send_notifications,
+                )
+                .execute()
+            )
+        except Exception as e:
+            logger.error(f"Failed to create event: {e}")
+            raise
+
+        return Event.from_api_response(result)
+
+    def update_event(
+        self,
+        event_id: str,
+        calendar_id: str = "primary",
+        summary: Optional[str] = None,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        description: Optional[str] = None,
+        location: Optional[str] = None,
+    ) -> Event:
+        """
+        Update an existing calendar event.
+
+        Only provided fields are updated; None fields are left unchanged.
+
+        Args:
+            event_id: The event ID to update
+            calendar_id: Calendar ID or "primary"
+            summary: New event title (optional)
+            start: New start datetime (optional)
+            end: New end datetime (optional)
+            description: New description (optional)
+            location: New location (optional)
+
+        Returns:
+            Updated Event object
+        """
+        # First, get the existing event
+        try:
+            existing = (
+                self.service.events()
+                .get(calendarId=calendar_id, eventId=event_id)
+                .execute()
+            )
+        except Exception as e:
+            logger.error(f"Failed to get event for update: {e}")
+            raise
+
+        # Update only provided fields
+        if summary is not None:
+            existing["summary"] = summary
+        if start is not None:
+            existing["start"] = {"dateTime": self._to_rfc3339(start)}
+        if end is not None:
+            existing["end"] = {"dateTime": self._to_rfc3339(end)}
+        if description is not None:
+            existing["description"] = description
+        if location is not None:
+            existing["location"] = location
+
+        try:
+            result = (
+                self.service.events()
+                .update(calendarId=calendar_id, eventId=event_id, body=existing)
+                .execute()
+            )
+        except Exception as e:
+            logger.error(f"Failed to update event {event_id}: {e}")
+            raise
+
+        return Event.from_api_response(result)
+
+    def delete_event(
+        self,
+        event_id: str,
+        calendar_id: str = "primary",
+        send_notifications: bool = True,
+    ) -> bool:
+        """
+        Delete a calendar event.
+
+        Args:
+            event_id: The event ID to delete
+            calendar_id: Calendar ID or "primary"
+            send_notifications: Whether to send cancellation emails (default True)
+
+        Returns:
+            True if successful
+        """
+        try:
+            self.service.events().delete(
+                calendarId=calendar_id,
+                eventId=event_id,
+                sendNotifications=send_notifications,
+            ).execute()
+        except Exception as e:
+            logger.error(f"Failed to delete event {event_id}: {e}")
+            raise
+
+        return True
+
     @staticmethod
     def _to_rfc3339(dt: datetime) -> str:
         """

@@ -209,3 +209,160 @@ def find_free_slots(
         }
         for slot in slots
     ]
+
+
+# =============================================================================
+# CALENDAR WRITE OPERATIONS (3 tools)
+# =============================================================================
+
+
+@mcp.tool()
+def create_event(
+    summary: str,
+    start_time: str,
+    duration_minutes: int = 60,
+    calendar_id: str = "primary",
+    description: str = "",
+    location: str = "",
+    attendees: str = "",
+    send_invites: bool = True,
+) -> dict:
+    """
+    Create a new calendar event.
+
+    Args:
+        summary: Event title (required)
+        start_time: Start time in ISO format, e.g., "2024-01-15T14:00:00" (required)
+        duration_minutes: Event duration in minutes (default 60)
+        calendar_id: Calendar to create event in (default "primary")
+        description: Event description (optional)
+        location: Event location (optional)
+        attendees: Comma-separated attendee email addresses (optional)
+        send_invites: Whether to send email invitations (default True)
+
+    Returns:
+        Created event with id, summary, start, end, and html_link.
+    """
+    client = get_calendar_client()
+
+    # Parse start time
+    start = datetime.fromisoformat(start_time)
+    if start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)
+
+    # Calculate end time
+    end = start + timedelta(minutes=duration_minutes)
+
+    # Parse attendees
+    attendee_list = None
+    if attendees:
+        attendee_list = [email.strip() for email in attendees.split(",") if email.strip()]
+
+    event = client.create_event(
+        summary=summary,
+        start=start,
+        end=end,
+        calendar_id=calendar_id,
+        description=description if description else None,
+        location=location if location else None,
+        attendees=attendee_list,
+        send_notifications=send_invites,
+    )
+
+    return {
+        "id": event.id,
+        "summary": event.summary,
+        "start": event.start.isoformat(),
+        "end": event.end.isoformat(),
+        "html_link": event.html_link,
+        "attendees": event.attendees,
+    }
+
+
+@mcp.tool()
+def update_event(
+    event_id: str,
+    calendar_id: str = "primary",
+    summary: str = "",
+    start_time: str = "",
+    duration_minutes: int = 0,
+    description: str = "",
+    location: str = "",
+) -> dict:
+    """
+    Update an existing calendar event.
+
+    Only non-empty fields are updated. Leave fields empty to keep current values.
+
+    Args:
+        event_id: The event ID to update (required)
+        calendar_id: Calendar ID (default "primary")
+        summary: New event title (optional)
+        start_time: New start time in ISO format (optional)
+        duration_minutes: New duration in minutes (only used if start_time is provided)
+        description: New description (optional)
+        location: New location (optional)
+
+    Returns:
+        Updated event with id, summary, start, end, and html_link.
+    """
+    client = get_calendar_client()
+
+    # Parse optional fields
+    start = None
+    end = None
+    if start_time:
+        start = datetime.fromisoformat(start_time)
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        if duration_minutes > 0:
+            end = start + timedelta(minutes=duration_minutes)
+
+    event = client.update_event(
+        event_id=event_id,
+        calendar_id=calendar_id,
+        summary=summary if summary else None,
+        start=start,
+        end=end,
+        description=description if description else None,
+        location=location if location else None,
+    )
+
+    return {
+        "id": event.id,
+        "summary": event.summary,
+        "start": event.start.isoformat(),
+        "end": event.end.isoformat(),
+        "html_link": event.html_link,
+    }
+
+
+@mcp.tool()
+def delete_event(
+    event_id: str,
+    calendar_id: str = "primary",
+    send_notifications: bool = True,
+) -> dict:
+    """
+    Delete a calendar event.
+
+    Args:
+        event_id: The event ID to delete (required)
+        calendar_id: Calendar ID (default "primary")
+        send_notifications: Whether to send cancellation emails to attendees (default True)
+
+    Returns:
+        Confirmation with deleted event_id and success status.
+    """
+    client = get_calendar_client()
+
+    success = client.delete_event(
+        event_id=event_id,
+        calendar_id=calendar_id,
+        send_notifications=send_notifications,
+    )
+
+    return {
+        "event_id": event_id,
+        "deleted": success,
+    }

@@ -8,6 +8,7 @@ MCP (Model Context Protocol) servers for Google APIs, designed for use with Clau
 |-----|-------|-------------|
 | **gmail** | 12 | Read emails, apply labels, create drafts (never sends) |
 | **sheets** | 5 | Read spreadsheet data (read-only) |
+| **calendar** | 7 | Read calendars, find free time, create/update/delete events |
 
 ## Installation
 
@@ -33,6 +34,9 @@ python -m gmail.auth
 
 # Sheets
 python -m sheets.auth --test YOUR_SPREADSHEET_ID
+
+# Calendar
+python -m calendar.auth --test
 ```
 
 ## Gmail MCP
@@ -65,6 +69,22 @@ Read-only tools for spreadsheet data:
 | `get_headers` | Get column headers |
 | `read_sheet` | Read rows as dictionaries |
 | `find_rows` | Find rows matching a value |
+
+## Calendar MCP
+
+Tools for calendar and scheduling:
+
+| Tool | Description |
+|------|-------------|
+| `list_calendars` | List all accessible calendars |
+| `list_events` | List upcoming events |
+| `get_event` | Get event details |
+| `find_free_slots` | Find available meeting times |
+| `create_event` | Create a new event |
+| `update_event` | Update an existing event |
+| `delete_event` | Delete an event |
+
+See [calendar/README.md](calendar/README.md) for details.
 
 ## Usage with Claude Code
 
