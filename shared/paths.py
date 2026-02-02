@@ -120,3 +120,14 @@ class MCPPaths:
     def calendar_token(self) -> Path:
         """Calendar OAuth token."""
         return self.credentials_dir / "calendar_token.json"
+
+    # Slides-specific paths
+    @property
+    def slides_credentials(self) -> Path:
+        """Slides OAuth client credentials (can share with Gmail)."""
+        return self.credentials_dir / "gmail_credentials.json"
+
+    @property
+    def slides_token(self) -> Path:
+        """Slides OAuth token."""
+        return self.credentials_dir / "slides_token.json"

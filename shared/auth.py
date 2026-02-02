@@ -24,6 +24,11 @@ CALENDAR_SCOPES = [
     "https://www.googleapis.com/auth/calendar.events",
 ]
 
+SLIDES_SCOPES = [
+    "https://www.googleapis.com/auth/presentations.readonly",
+    "https://www.googleapis.com/auth/presentations",
+]
+
 
 class GoogleAuth:
     """Handle Google OAuth authentication."""
