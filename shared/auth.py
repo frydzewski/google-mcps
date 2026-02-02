@@ -29,6 +29,11 @@ SLIDES_SCOPES = [
     "https://www.googleapis.com/auth/presentations",
 ]
 
+FORMS_SCOPES = [
+    "https://www.googleapis.com/auth/forms.body.readonly",
+    "https://www.googleapis.com/auth/forms.responses.readonly",
+]
+
 
 class GoogleAuth:
     """Handle Google OAuth authentication."""

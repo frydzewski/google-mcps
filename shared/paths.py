@@ -131,3 +131,14 @@ class MCPPaths:
     def slides_token(self) -> Path:
         """Slides OAuth token."""
         return self.credentials_dir / "slides_token.json"
+
+    # Forms-specific paths
+    @property
+    def forms_credentials(self) -> Path:
+        """Forms OAuth client credentials (can share with Gmail)."""
+        return self.credentials_dir / "gmail_credentials.json"
+
+    @property
+    def forms_token(self) -> Path:
+        """Forms OAuth token."""
+        return self.credentials_dir / "forms_token.json"
