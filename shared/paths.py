@@ -109,3 +109,14 @@ class MCPPaths:
     def sheets_token(self) -> Path:
         """Sheets OAuth token."""
         return self.credentials_dir / "sheets_token.json"
+
+    # Calendar-specific paths
+    @property
+    def calendar_credentials(self) -> Path:
+        """Calendar OAuth client credentials (can share with Gmail)."""
+        return self.credentials_dir / "gmail_credentials.json"
+
+    @property
+    def calendar_token(self) -> Path:
+        """Calendar OAuth token."""
+        return self.credentials_dir / "calendar_token.json"
