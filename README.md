@@ -10,6 +10,7 @@ MCP (Model Context Protocol) servers for Google APIs, designed for use with Clau
 | **sheets** | 5 | Read spreadsheet data (read-only) |
 | **calendar** | 7 | Read calendars, find free time, create/update/delete events |
 | **slides** | 7 | Read presentations, extract text, create slides and text boxes |
+| **forms** | 6 | Read form structure and analyze responses (read-only) |
 
 ## Installation
 
@@ -41,6 +42,9 @@ python -m calendar.auth --test
 
 # Slides
 python -m slides.auth --test YOUR_PRESENTATION_ID
+
+# Forms
+python -m forms.auth --test YOUR_FORM_ID
 ```
 
 ## Gmail MCP
@@ -105,6 +109,21 @@ Tools for presentations:
 | `add_text_to_slide` | Add a text box to a slide |
 
 See [slides/README.md](slides/README.md) for details.
+
+## Forms MCP
+
+Read-only tools for form structure and responses:
+
+| Tool | Description |
+|------|-------------|
+| `get_form` | Get form metadata and all questions |
+| `list_questions` | List questions with types and options |
+| `get_responses` | Get all responses with answers |
+| `get_responses_table` | Get responses as table format |
+| `get_response` | Get a specific response |
+| `get_response_summary` | Get statistics and distributions |
+
+See [forms/README.md](forms/README.md) for details.
 
 ## Usage with Claude Code
 

@@ -165,3 +165,103 @@ class FormsClient:
         """
         form = self.get_form(form_id)
         return [q.title for q in form.questions]
+
+    def get_response_summary(self, form_id: str) -> dict:
+        """
+        Generate summary statistics for form responses.
+
+        Args:
+            form_id: The form ID
+
+        Returns:
+            Summary dict with:
+            - total_responses: int
+            - first_response: datetime ISO string or None
+            - last_response: datetime ISO string or None
+            - question_stats: dict mapping question title to answer stats
+        """
+        # Get form structure for question titles and types
+        form = self.get_form(form_id)
+        question_map = {q.question_id: q for q in form.questions}
+
+        # Get all responses
+        summary = self.list_responses(form_id)
+
+        if summary.total_responses == 0:
+            return {
+                "total_responses": 0,
+                "first_response": None,
+                "last_response": None,
+                "question_stats": {},
+            }
+
+        # Calculate date range
+        timestamps = [r.last_submitted_time for r in summary.responses]
+        first_response = min(timestamps)
+        last_response = max(timestamps)
+
+        # Calculate question stats
+        question_stats = {}
+        for question in form.questions:
+            qid = question.question_id
+            title = question.title
+            qtype = question.question_type
+
+            # Count answers for this question
+            answers = []
+            for response in summary.responses:
+                if qid in response.answers:
+                    answer = response.answers[qid]
+                    answers.extend(answer.text_answers)
+
+            if qtype in ("CHOICE", "CHECKBOX", "DROPDOWN"):
+                # Distribution for choice questions
+                distribution = {}
+                for answer_val in answers:
+                    distribution[answer_val] = distribution.get(answer_val, 0) + 1
+                question_stats[title] = {
+                    "type": qtype,
+                    "total_answers": len(answers),
+                    "distribution": distribution,
+                }
+            else:
+                # Just count for text/other questions
+                question_stats[title] = {
+                    "type": qtype,
+                    "total_answers": len(answers),
+                }
+
+        return {
+            "total_responses": summary.total_responses,
+            "first_response": first_response.isoformat(),
+            "last_response": last_response.isoformat(),
+            "question_stats": question_stats,
+        }
+
+    def get_answer_distribution(
+        self,
+        form_id: str,
+        question_id: str,
+    ) -> dict[str, int]:
+        """
+        Get answer distribution for a specific question.
+
+        Useful for choice-based questions to see how responses are distributed.
+
+        Args:
+            form_id: The form ID
+            question_id: The question ID
+
+        Returns:
+            Dict mapping answer value to count
+        """
+        summary = self.list_responses(form_id)
+
+        distribution: dict[str, int] = {}
+        for response in summary.responses:
+            if question_id in response.answers:
+                answer = response.answers[question_id]
+                for answer_val in answer.text_answers:
+                    distribution[answer_val] = distribution.get(answer_val, 0) + 1
+
+        return distribution
