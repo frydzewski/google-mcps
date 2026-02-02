@@ -1,10 +1,14 @@
 """Google Slides API client wrapper."""
 from typing import Optional
 import logging
+import uuid
 
 from .models import Presentation, Slide, PageElement
 
 logger = logging.getLogger("google_mcps.slides")
+
+# EMU (English Metric Units) conversion: 1 point = 12700 EMU
+EMU_PER_POINT = 12700
 
 
 class SlidesClient:
@@ -163,3 +167,172 @@ class SlidesClient:
                 parts.append(f"--- Slide {slide['slide_number']} ---\n{slide['text']}")
 
         return "\n\n".join(parts)
+
+    # =========================================================================
+    # Write Operations
+    # =========================================================================
+
+    def create_presentation(self, title: str) -> Presentation:
+        """
+        Create a new presentation.
+
+        Args:
+            title: Title for the new presentation
+
+        Returns:
+            Presentation object with the new presentation's ID
+        """
+        body = {"title": title}
+
+        try:
+            result = self.service.presentations().create(body=body).execute()
+        except Exception as e:
+            logger.error(f"Failed to create presentation: {e}")
+            raise
+
+        return Presentation.from_api_response(result)
+
+    def create_slide(
+        self,
+        presentation_id: str,
+        layout: str = "BLANK",
+        insert_at: int = -1,
+    ) -> str:
+        """
+        Create a new slide in a presentation.
+
+        Args:
+            presentation_id: The presentation ID
+            layout: Predefined layout - BLANK, TITLE, TITLE_AND_BODY, etc.
+            insert_at: Position to insert (-1 = append at end)
+
+        Returns:
+            The new slide's object ID
+        """
+        slide_id = f"slide_{uuid.uuid4().hex[:8]}"
+
+        request = {
+            "createSlide": {
+                "objectId": slide_id,
+                "slideLayoutReference": {
+                    "predefinedLayout": layout,
+                },
+            }
+        }
+
+        if insert_at >= 0:
+            request["createSlide"]["insertionIndex"] = insert_at
+
+        try:
+            self.service.presentations().batchUpdate(
+                presentationId=presentation_id,
+                body={"requests": [request]},
+            ).execute()
+        except Exception as e:
+            logger.error(f"Failed to create slide: {e}")
+            raise
+
+        return slide_id
+
+    def add_text_box(
+        self,
+        presentation_id: str,
+        slide_id: str,
+        text: str,
+        x: float = 100,
+        y: float = 100,
+        width: float = 400,
+        height: float = 100,
+    ) -> str:
+        """
+        Add a text box to a slide.
+
+        Args:
+            presentation_id: The presentation ID
+            slide_id: The slide's object ID
+            text: Text content for the text box
+            x: X position in points from left
+            y: Y position in points from top
+            width: Width in points
+            height: Height in points
+
+        Returns:
+            The new text box element's object ID
+        """
+        element_id = f"textbox_{uuid.uuid4().hex[:8]}"
+
+        requests = [
+            # Create the shape
+            {
+                "createShape": {
+                    "objectId": element_id,
+                    "shapeType": "TEXT_BOX",
+                    "elementProperties": {
+                        "pageObjectId": slide_id,
+                        "size": {
+                            "width": {"magnitude": self._points_to_emu(width), "unit": "EMU"},
+                            "height": {"magnitude": self._points_to_emu(height), "unit": "EMU"},
+                        },
+                        "transform": {
+                            "scaleX": 1,
+                            "scaleY": 1,
+                            "translateX": self._points_to_emu(x),
+                            "translateY": self._points_to_emu(y),
+                            "unit": "EMU",
+                        },
+                    },
+                }
+            },
+            # Insert text into the shape
+            {
+                "insertText": {
+                    "objectId": element_id,
+                    "insertionIndex": 0,
+                    "text": text,
+                }
+            },
+        ]
+
+        try:
+            self.service.presentations().batchUpdate(
+                presentationId=presentation_id,
+                body={"requests": requests},
+            ).execute()
+        except Exception as e:
+            logger.error(f"Failed to add text box: {e}")
+            raise
+
+        return element_id
+
+    def delete_slide(self, presentation_id: str, slide_id: str) -> bool:
+        """
+        Delete a slide from a presentation.
+
+        Args:
+            presentation_id: The presentation ID
+            slide_id: The slide's object ID
+
+        Returns:
+            True if successful
+        """
+        request = {
+            "deleteObject": {
+                "objectId": slide_id,
+            }
+        }
+
+        try:
+            self.service.presentations().batchUpdate(
+                presentationId=presentation_id,
+                body={"requests": [request]},
+            ).execute()
+        except Exception as e:
+            logger.error(f"Failed to delete slide {slide_id}: {e}")
+            raise
+
+        return True
+
+    @staticmethod
+    def _points_to_emu(points: float) -> int:
+        """Convert points to EMU (English Metric Units)."""
+        return int(points * EMU_PER_POINT)

@@ -9,6 +9,7 @@ MCP (Model Context Protocol) servers for Google APIs, designed for use with Clau
 | **gmail** | 12 | Read emails, apply labels, create drafts (never sends) |
 | **sheets** | 5 | Read spreadsheet data (read-only) |
 | **calendar** | 7 | Read calendars, find free time, create/update/delete events |
+| **slides** | 7 | Read presentations, extract text, create slides and text boxes |
 
 ## Installation
 
@@ -37,6 +38,9 @@ python -m sheets.auth --test YOUR_SPREADSHEET_ID
 
 # Calendar
 python -m calendar.auth --test
+
+# Slides
+python -m slides.auth --test YOUR_PRESENTATION_ID
 ```
 
 ## Gmail MCP
@@ -85,6 +89,22 @@ Tools for calendar and scheduling:
 | `delete_event` | Delete an event |
 
 See [calendar/README.md](calendar/README.md) for details.
+
+## Slides MCP
+
+Tools for presentations:
+
+| Tool | Description |
+|------|-------------|
+| `get_presentation` | Get presentation metadata |
+| `list_slides` | List all slides with summaries |
+| `get_slide_text` | Get text from a slide (or all) |
+| `get_presentation_text` | Get all text by slide |
+| `create_presentation` | Create a new presentation |
+| `create_slide` | Add a slide with layout |
+| `add_text_to_slide` | Add a text box to a slide |
+
+See [slides/README.md](slides/README.md) for details.
 
 ## Usage with Claude Code
 
