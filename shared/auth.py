@@ -19,6 +19,11 @@ SHEETS_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
 ]
 
+CALENDAR_SCOPES = [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar.events",
+]
+
 
 class GoogleAuth:
     """Handle Google OAuth authentication."""
